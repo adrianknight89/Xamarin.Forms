@@ -73,7 +73,10 @@ namespace Xamarin.Forms.Platform.UWP
 			ReadOnlyCollection<Element> children = ElementController.LogicalChildren;
 			for (var i = 0; i < children.Count; i++)
 			{
-				OnChildAdded(_renderer.Element, new ElementEventArgs(children[i]));
+				var view = children[i] as VisualElement;
+				if (view == null) continue;
+
+				SetupVisualElement(view);
 			}
 		}
 
@@ -98,13 +101,8 @@ namespace Xamarin.Forms.Platform.UWP
 			}
 		}
 
-		void OnChildAdded(object sender, ElementEventArgs e)
+		void SetupVisualElement(VisualElement view)
 		{
-			var view = e.Element as VisualElement;
-
-			if (view == null)
-				return;
-
 			IVisualElementRenderer childRenderer = Platform.CreateRenderer(view);
 			Platform.SetRenderer(view, childRenderer);
 
@@ -118,7 +116,16 @@ namespace Xamarin.Forms.Platform.UWP
 				Windows.UI.Xaml.Controls.Grid.SetColumnSpan(childRenderer.ContainerElement, _columnSpan);
 
 			_panel.Children.Add(childRenderer.ContainerElement);
+		}
 
+		void OnChildAdded(object sender, ElementEventArgs e)
+		{
+			var view = e.Element as VisualElement;
+
+			if (view == null)
+				return;
+
+			SetupVisualElement(view);
 			if (ElementController.LogicalChildren[ElementController.LogicalChildren.Count - 1] != view)
 				EnsureZIndex();
 		}

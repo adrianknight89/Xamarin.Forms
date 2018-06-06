@@ -30,7 +30,7 @@ namespace Xamarin.Forms.Controls.Issues
 		const string Success = "BoxView Not Overlapping";
 		string instructions = $"Click {ButtonText}. If Box View shows up over me test has failed.";
 		const string TestForButtonClicked = "Test For Clicked";
-
+		const string FailureText = "If this is visible test fails";
 
 		protected override void Init()
 		{
@@ -38,6 +38,19 @@ namespace Xamarin.Forms.Controls.Issues
 
 			layout.ColumnDefinitions.Add(new ColumnDefinition() { Width = GridLength.Star });
 			layout.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Star });
+			layout.Children.Add(new Grid()
+			{
+				Children =
+				{
+					new Label()
+					{
+						Margin = 10,
+						Text = FailureText,
+						BackgroundColor = Color.White
+					}
+				}
+			});
+
 			layout.Children.Add(new Button()
 			{
 				Text = ButtonText,
