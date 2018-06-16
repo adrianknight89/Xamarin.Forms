@@ -230,8 +230,6 @@ namespace Xamarin.Forms.Platform.iOS
 
 			public override void DidFailProvisionalNavigation(WKWebView webView, WKNavigation navigation, NSError error)
 			{
-				//base.DidFailProvisionalNavigation(webView, navigation, error);
-
 				var url = GetCurrentUrl();
 				WebView.SendNavigated(new WebNavigatedEventArgs(_lastEvent, new UrlWebViewSource { Url = url }, url, WebNavigationResult.Failure));
 
@@ -240,8 +238,6 @@ namespace Xamarin.Forms.Platform.iOS
 
 			public override void DidFinishNavigation(WKWebView webView, WKNavigation navigation)
 			{
-				//base.DidFinishNavigation(webView, navigation);
-
 				if (webView.IsLoading)
 					return;
 
@@ -258,13 +254,11 @@ namespace Xamarin.Forms.Platform.iOS
 
 			public override void DidStartProvisionalNavigation(WKWebView webView, WKNavigation navigation)
 			{
-				//base.DidStartProvisionalNavigation(webView, navigation);
+
 			}
 
 			public override void DecidePolicy(WKWebView webView, WKNavigationAction navigationAction, Action<WKNavigationActionPolicy> decisionHandler)
 			{
-				//base.DecidePolicy(webView, navigationAction, decisionHandler);
-
 				var navEvent = WebNavigationEvent.NewPage;
 				switch (navigationAction.NavigationType)
 				{
