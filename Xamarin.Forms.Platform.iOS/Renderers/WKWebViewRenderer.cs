@@ -1,15 +1,17 @@
-using System;
+﻿using System;
 using System.ComponentModel;
-using System.Drawing;
+using System.Diagnostics;
 using System.Threading.Tasks;
+using CoreGraphics;
 using Foundation;
 using UIKit;
+using WebKit;
 using Xamarin.Forms.Internals;
 using Uri = System.Uri;
 
 namespace Xamarin.Forms.Platform.iOS
 {
-	public class WebViewRenderer : UIWebView, IVisualElementRenderer, IWebViewDelegate, IEffectControlProvider
+	public class WKWebViewRenderer : WKWebView, IVisualElementRenderer, IWebViewDelegate, IEffectControlProvider
 	{
 		EventTracker _events;
 		bool _ignoreSourceChanges, _disposed;
@@ -18,7 +20,7 @@ namespace Xamarin.Forms.Platform.iOS
 #pragma warning disable 0414
 		VisualElementTracker _tracker;
 #pragma warning restore 0414
-		public WebViewRenderer() : base(RectangleF.Empty)
+		public WKWebViewRenderer() : base(CGRect.Empty, new WKWebViewConfiguration())
 		{
 		}
 
@@ -42,7 +44,7 @@ namespace Xamarin.Forms.Platform.iOS
 			WebView.EvaluateJavaScriptRequested += OnEvaluateJavaScriptRequested;
 			WebView.GoBackRequested += OnGoBackRequested;
 			WebView.GoForwardRequested += OnGoForwardRequested;
-			Delegate = new CustomWebViewDelegate(this);
+			NavigationDelegate = new CustomWebViewDelegate(this);
 
 			BackgroundColor = UIColor.Clear;
 
@@ -145,7 +147,16 @@ namespace Xamarin.Forms.Platform.iOS
 
 		void OnEvalRequested(object sender, EvalRequested eventArg)
 		{
-			EvaluateJavascript(eventArg.Script);
+			void handler(NSObject result, NSError err)
+			{
+				// there isn't much that we could do here since the return type of the parent method is void
+				if (err != null)
+					Debug.WriteLine(err);
+				if (result != null)
+					Debug.WriteLine(result);
+			}
+
+			EvaluateJavaScript(eventArg.Script, handler);
 		}
 
 		async Task<string> OnEvaluateJavaScriptRequested(string script)
@@ -153,7 +164,23 @@ namespace Xamarin.Forms.Platform.iOS
 			var tcr = new TaskCompletionSource<string>();
 			var task = tcr.Task;
 
-			Device.BeginInvokeOnMainThread(() => { tcr.SetResult(EvaluateJavascript(script)); });
+			Device.BeginInvokeOnMainThread(() =>
+			{
+				void handler(NSObject result, NSError err)
+				{
+					if (err != null)
+					{
+						// the below result seems to be hard-coded into the Core method for errors
+						// don't care to check result here
+						tcr.SetResult("null");
+						return;
+					}
+
+					tcr.SetResult(result.ToString());
+				}
+
+				EvaluateJavaScript(script, handler);
+			});
 
 			return await task.ConfigureAwait(false);
 		}
@@ -186,12 +213,12 @@ namespace Xamarin.Forms.Platform.iOS
 			((IWebViewController)WebView).CanGoForward = CanGoForward;
 		}
 
-		class CustomWebViewDelegate : UIWebViewDelegate
+		class CustomWebViewDelegate : WKNavigationDelegate
 		{
-			readonly WebViewRenderer _renderer;
+			readonly WKWebViewRenderer _renderer;
 			WebNavigationEvent _lastEvent;
 
-			public CustomWebViewDelegate(WebViewRenderer renderer)
+			public CustomWebViewDelegate(WKWebViewRenderer renderer)
 			{
 				_renderer = renderer ?? throw new ArgumentNullException("renderer");
 			}
@@ -201,16 +228,20 @@ namespace Xamarin.Forms.Platform.iOS
 				get { return (WebView)_renderer.Element; }
 			}
 
-			public override void LoadFailed(UIWebView webView, NSError error)
+			public override void DidFailProvisionalNavigation(WKWebView webView, WKNavigation navigation, NSError error)
 			{
+				//base.DidFailProvisionalNavigation(webView, navigation, error);
+
 				var url = GetCurrentUrl();
 				WebView.SendNavigated(new WebNavigatedEventArgs(_lastEvent, new UrlWebViewSource { Url = url }, url, WebNavigationResult.Failure));
 
 				_renderer.UpdateCanGoBackForward();
 			}
 
-			public override void LoadingFinished(UIWebView webView)
+			public override void DidFinishNavigation(WKWebView webView, WKNavigation navigation)
 			{
+				//base.DidFinishNavigation(webView, navigation);
+
 				if (webView.IsLoading)
 					return;
 
@@ -225,47 +256,50 @@ namespace Xamarin.Forms.Platform.iOS
 				_renderer.UpdateCanGoBackForward();
 			}
 
-			public override void LoadStarted(UIWebView webView)
+			public override void DidStartProvisionalNavigation(WKWebView webView, WKNavigation navigation)
 			{
+				//base.DidStartProvisionalNavigation(webView, navigation);
 			}
 
-			public override bool ShouldStartLoad(UIWebView webView, NSUrlRequest request, UIWebViewNavigationType navigationType)
+			public override void DecidePolicy(WKWebView webView, WKNavigationAction navigationAction, Action<WKNavigationActionPolicy> decisionHandler)
 			{
+				//base.DecidePolicy(webView, navigationAction, decisionHandler);
+
 				var navEvent = WebNavigationEvent.NewPage;
-				switch (navigationType)
+				switch (navigationAction.NavigationType)
 				{
-					case UIWebViewNavigationType.LinkClicked:
+					case WKNavigationType.LinkActivated:
 						navEvent = WebNavigationEvent.NewPage;
 						break;
-					case UIWebViewNavigationType.FormSubmitted:
+					case WKNavigationType.FormSubmitted:
 						navEvent = WebNavigationEvent.NewPage;
 						break;
-					case UIWebViewNavigationType.BackForward:
+					case WKNavigationType.BackForward:
 						navEvent = _renderer._lastBackForwardEvent;
 						break;
-					case UIWebViewNavigationType.Reload:
+					case WKNavigationType.Reload:
 						navEvent = WebNavigationEvent.Refresh;
 						break;
-					case UIWebViewNavigationType.FormResubmitted:
+					case WKNavigationType.FormResubmitted:
 						navEvent = WebNavigationEvent.NewPage;
 						break;
-					case UIWebViewNavigationType.Other:
+					case WKNavigationType.Other:
 						navEvent = WebNavigationEvent.NewPage;
 						break;
 				}
 
 				_lastEvent = navEvent;
-				var lastUrl = request.Url.ToString();
+				var lastUrl = navigationAction.Request.Url.ToString();
 				var args = new WebNavigatingEventArgs(navEvent, new UrlWebViewSource { Url = lastUrl }, lastUrl);
 
 				WebView.SendNavigating(args);
 				_renderer.UpdateCanGoBackForward();
-				return !args.Cancel;
+				decisionHandler(args.Cancel ? WKNavigationActionPolicy.Cancel : WKNavigationActionPolicy.Allow);
 			}
 
 			string GetCurrentUrl()
 			{
-				return _renderer?.Request?.Url?.AbsoluteUrl?.ToString();
+				return _renderer?.Url?.AbsoluteUrl?.ToString();
 			}
 		}
 

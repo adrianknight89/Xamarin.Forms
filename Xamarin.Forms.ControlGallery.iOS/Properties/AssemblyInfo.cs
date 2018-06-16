@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Xamarin.Forms;
 using Xamarin.Forms.ControlGallery.iOS;
 using Xamarin.Forms.Controls;
+using Xamarin.Forms.Platform.iOS;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
@@ -41,3 +42,5 @@ using Xamarin.Forms.Controls;
 
 // Deliberately broken image source and handler so we can test handling of image loading errors
 [assembly: ExportImageSourceHandler(typeof(FailImageSource), typeof(BrokenImageSourceHandler))]
+// Starting in iOS 8.0 and OS X 10.10, WKWebView is the recommended web viewer
+[assembly: ExportRenderer(typeof(WebView), typeof(WKWebViewRenderer))]
