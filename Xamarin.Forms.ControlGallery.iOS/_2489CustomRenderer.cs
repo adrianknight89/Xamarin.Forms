@@ -14,7 +14,7 @@ namespace Xamarin.Forms.ControlGallery.iOS
 		{
 			base.OnElementChanged(e);
 
-			System.Diagnostics.Debug.WriteLine($"{e.NewElement.GetType()} is replaced by _2489CustomRenderer");
+			System.Diagnostics.Debug.WriteLine($"{e.NewElement.GetType()} is replaced by {nameof(_2489CustomRenderer)}");
 		}
 	}
 }
