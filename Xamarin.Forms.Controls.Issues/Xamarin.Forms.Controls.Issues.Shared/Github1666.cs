@@ -23,7 +23,8 @@ namespace Xamarin.Forms.Controls.Issues
 			var webView = new WebView
 			{
 				BackgroundColor = Color.Magenta,
-				Source = "https://blog.xamarin.com",
+				Source = "http://www.stealmylogin.com/", // secure resource (test navigating to both http and https from https)
+				//Source = "http://www.httpvshttps.com//", // insecure resource (test navigating to both http and https from http)
 				VerticalOptions = LayoutOptions.FillAndExpand
 			};
 			stackLayout.Children.Add(webView);
