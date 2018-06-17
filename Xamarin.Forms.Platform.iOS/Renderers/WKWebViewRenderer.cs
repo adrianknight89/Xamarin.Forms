@@ -217,6 +217,7 @@ namespace Xamarin.Forms.Platform.iOS
 		{
 			readonly WKWebViewRenderer _renderer;
 			WebNavigationEvent _lastEvent;
+			//bool _isNavigationInProgress;
 
 			public CustomWebViewDelegate(WKWebViewRenderer renderer)
 			{
@@ -228,8 +229,18 @@ namespace Xamarin.Forms.Platform.iOS
 				get { return (WebView)_renderer.Element; }
 			}
 
-			public override void DidFailProvisionalNavigation(WKWebView webView, WKNavigation navigation, NSError error)
+			#region Event handlers
+			public override void DidCommitNavigation(WKWebView webView, WKNavigation navigation)
 			{
+				Debug.WriteLine("DEBUG ======> didcommitnavigation");
+				//_isNavigationInProgress = true;
+			}
+
+			public override void DidFailNavigation(WKWebView webView, WKNavigation navigation, NSError error)
+			{
+				Debug.WriteLine("DEBUG ======> didfailnavigation");
+				//_isNavigationInProgress = false;
+
 				var url = GetCurrentUrl();
 				WebView.SendNavigated(new WebNavigatedEventArgs(_lastEvent, new UrlWebViewSource { Url = url }, url, WebNavigationResult.Failure));
 
@@ -238,6 +249,9 @@ namespace Xamarin.Forms.Platform.iOS
 
 			public override void DidFinishNavigation(WKWebView webView, WKNavigation navigation)
 			{
+				Debug.WriteLine("DEBUG ======> didfinishnavigation");
+				//_isNavigationInProgress = false;
+
 				if (webView.IsLoading)
 					return;
 
@@ -251,14 +265,33 @@ namespace Xamarin.Forms.Platform.iOS
 
 				_renderer.UpdateCanGoBackForward();
 			}
+			#endregion
 
+			#region Provisional handlers
+			// Do not use these to send Navigating/Navigated events as they are likely to get called multiple times or not at all
+			// They seem to be triggered for partial views like 3rd-party AJAX plugins in addition to usual web content
 			public override void DidStartProvisionalNavigation(WKWebView webView, WKNavigation navigation)
 			{
-
+				Debug.WriteLine("DEBUG ======> didstartprovisionalnavigation");
 			}
+
+			public override void DidFailProvisionalNavigation(WKWebView webView, WKNavigation navigation, NSError error)
+			{
+				Debug.WriteLine("DEBUG ======> didfailprovisionalnavigation");
+			}
+			#endregion
 
 			public override void DecidePolicy(WKWebView webView, WKNavigationAction navigationAction, Action<WKNavigationActionPolicy> decisionHandler)
 			{
+				Debug.WriteLine("DEBUG ======> decidepolicy");
+				//if (_isNavigationInProgress)
+				//{
+				//	// anything that triggers policy decisions after navigation begins is often a partial view / iframe
+				//	// no need to send navigation events for such content
+				//	decisionHandler(WKNavigationActionPolicy.Allow);
+				//	return;
+				//}
+
 				var navEvent = WebNavigationEvent.NewPage;
 				switch (navigationAction.NavigationType)
 				{
@@ -289,6 +322,14 @@ namespace Xamarin.Forms.Platform.iOS
 				WebView.SendNavigating(args);
 				_renderer.UpdateCanGoBackForward();
 				decisionHandler(args.Cancel ? WKNavigationActionPolicy.Cancel : WKNavigationActionPolicy.Allow);
+			}
+
+			public override void DidReceiveAuthenticationChallenge(WKWebView webView, NSUrlAuthenticationChallenge challenge, Action<NSUrlSessionAuthChallengeDisposition, NSUrlCredential> completionHandler)
+			{
+				if (challenge.ProtectionSpace.AuthenticationMethod == "NSURLAuthenticationMethodServerTrust")
+					completionHandler(NSUrlSessionAuthChallengeDisposition.UseCredential, new NSUrlCredential(trust: challenge.ProtectionSpace.ServerSecTrust));
+				else
+					completionHandler(NSUrlSessionAuthChallengeDisposition.PerformDefaultHandling, null);
 			}
 
 			string GetCurrentUrl()
