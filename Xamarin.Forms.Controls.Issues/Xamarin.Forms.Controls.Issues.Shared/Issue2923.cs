@@ -10,7 +10,7 @@ using NUnit.Framework;
 namespace Xamarin.Forms.Controls.Issues
 {
 	[Preserve (AllMembers = true)]
-	[Issue (IssueTracker.Github, 2923, "First tab does not load until navigating", PlatformAffected.WinRT)]
+	[Issue (IssueTracker.None, 2923, "First tab does not load until navigating", PlatformAffected.WinRT)]
 	public class Issue2923 : TestTabbedPage
 	{
 		protected override void Init()
