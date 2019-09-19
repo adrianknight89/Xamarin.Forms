@@ -331,29 +331,26 @@ namespace Xamarin.Forms.Platform.Android
 
 		protected virtual void UpdateVerticalScrollBarVisibility()
 		{
+			// cache original vertical scroll visibility
 			if (_defaultVerticalScrollVisibility == ScrollBarVisibility.Default)
 				_defaultVerticalScrollVisibility = VerticalScrollBarEnabled ? ScrollBarVisibility.Always : ScrollBarVisibility.Never;
 
-			var newVerticalScrollVisibility = ItemsView.VerticalScrollBarVisibility;
-
-			if (newVerticalScrollVisibility == ScrollBarVisibility.Default)
-				newVerticalScrollVisibility = _defaultVerticalScrollVisibility;
-
-			VerticalScrollBarEnabled = newVerticalScrollVisibility == ScrollBarVisibility.Always;
+			if (ItemsView.VerticalScrollBarVisibility != ScrollBarVisibility.Default)
+				VerticalScrollBarEnabled = ItemsView.VerticalScrollBarVisibility == ScrollBarVisibility.Always;
+			else
+				VerticalScrollBarEnabled = _defaultVerticalScrollVisibility == ScrollBarVisibility.Always;
 		}
 
 		protected virtual void UpdateHorizontalScrollBarVisibility()
 		{
+			// cache original horizontal scroll visibility
 			if (_defaultHorizontalScrollVisibility == ScrollBarVisibility.Default)
-				_defaultHorizontalScrollVisibility =
-					HorizontalScrollBarEnabled ? ScrollBarVisibility.Always : ScrollBarVisibility.Never;
+				_defaultHorizontalScrollVisibility = HorizontalScrollBarEnabled ? ScrollBarVisibility.Always : ScrollBarVisibility.Never;
 
-			var newHorizontalScrollVisiblility = ItemsView.HorizontalScrollBarVisibility;
-
-			if (newHorizontalScrollVisiblility == ScrollBarVisibility.Default)
-				newHorizontalScrollVisiblility = _defaultHorizontalScrollVisibility;
-
-			HorizontalScrollBarEnabled = newHorizontalScrollVisiblility == ScrollBarVisibility.Always;
+			if (ItemsView.HorizontalScrollBarVisibility != ScrollBarVisibility.Default)
+				HorizontalScrollBarEnabled = ItemsView.HorizontalScrollBarVisibility == ScrollBarVisibility.Always;
+			else
+				HorizontalScrollBarEnabled = _defaultHorizontalScrollVisibility == ScrollBarVisibility.Always;
 		}
 
 		protected virtual void TearDownOldElement(ItemsView oldElement)

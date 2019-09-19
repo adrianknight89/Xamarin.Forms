@@ -159,6 +159,10 @@ namespace Xamarin.Forms.Platform.iOS
 					ItemsViewController.CollectionView.ShowsVerticalScrollIndicator = _defaultVerticalScrollVisibility.Value;
 					break;
 			}
+
+			// If this is executed before the view is shown initially (i.e. before ViewDidAppear), it will have no effect.
+			if (ItemsViewController.CollectionView.ShowsVerticalScrollIndicator)
+				ItemsViewController.CollectionView.FlashScrollIndicators();
 		}
 
 		void UpdateHorizontalScrollBarVisibility()
@@ -178,6 +182,10 @@ namespace Xamarin.Forms.Platform.iOS
 					ItemsViewController.CollectionView.ShowsHorizontalScrollIndicator = _defaultHorizontalScrollVisibility.Value;
 					break;
 			}
+
+			// If this is executed before the view is shown initially (i.e. before ViewDidAppear), it will have no effect.
+			if(ItemsViewController.CollectionView.ShowsHorizontalScrollIndicator)
+				ItemsViewController.CollectionView.FlashScrollIndicators();
 		}
 
 		protected virtual void ScrollToRequested(object sender, ScrollToRequestEventArgs args)
