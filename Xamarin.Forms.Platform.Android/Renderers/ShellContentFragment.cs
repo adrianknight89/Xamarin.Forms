@@ -149,7 +149,7 @@ namespace Xamarin.Forms.Platform.Android
 			_toolbarTracker.Dispose();
 			_appearanceTracker.Dispose();
 
-			((IShellController)_shellContext.Shell).RemoveAppearanceObserver(this);
+			((IShellController)_shellContext.Shell)?.RemoveAppearanceObserver(this);
 
 			if (_shellContent != null)
 			{

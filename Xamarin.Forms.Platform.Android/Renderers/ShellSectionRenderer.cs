@@ -1,17 +1,15 @@
-using Android.OS;
-using Android.Runtime;
-using Android.Support.Design.Widget;
-using Android.Support.V4.View;
-using Android.Support.V4.Widget;
-using Android.Views;
 using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using Android.OS;
+using Android.Runtime;
+using Android.Support.Design.Widget;
+using Android.Support.V4.View;
+using Android.Views;
 using Xamarin.Forms.Platform.Android.AppCompat;
 using AView = Android.Views.View;
 using Fragment = Android.Support.V4.App.Fragment;
-using LP = Android.Views.ViewGroup.LayoutParams;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Xamarin.Forms.Platform.Android
@@ -251,7 +249,7 @@ namespace Xamarin.Forms.Platform.Android
 		void UnhookEvents()
 		{
 			((INotifyCollectionChanged)ShellSection.Items).CollectionChanged -= OnItemsCollectionChagned;
-			((IShellController)_shellContext.Shell).RemoveAppearanceObserver(this);
+			((IShellController)_shellContext.Shell)?.RemoveAppearanceObserver(this);
 			ShellSection.PropertyChanged -= OnShellItemPropertyChanged;
 		}
 	}
